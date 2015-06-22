@@ -1,6 +1,7 @@
 package org.trec.liveqa;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -8,6 +9,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 import java.util.logging.Logger;
+import java.util.logging.Handler;
+import java.util.logging.FileHandler;
+import java.util.logging.Level;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -31,6 +35,7 @@ import fi.iki.elonen.NanoHTTPD;
  */
 public class TrecLiveQaDemoServer extends NanoHTTPD {
 
+    public static final String LOG_FILENAME = "POSTED_QUESTIONS.txt";
     public static final String PARTICIPANT_ID = "demo-id-01";
     
     public static final String QUESTION_ID_PARAMETER_NAME = "qid";
@@ -73,7 +78,8 @@ public class TrecLiveQaDemoServer extends NanoHTTPD {
     public Response serve(IHTTPSession session) {
         // extract get time from system
         final long getTime = System.currentTimeMillis();
-        logger.info("Got request at " + getTime);
+        // logger.info("Got request at " + getTime);
+        System.out.println("Got request");
 
         // read question data
         Map<String, String> files = new HashMap<>();
@@ -93,7 +99,14 @@ public class TrecLiveQaDemoServer extends NanoHTTPD {
         String title = params.get(QUESTION_TITLE_PARAMETER_NAME);
         String body = params.get(QUESTION_BODY_PARAMETER_NAME);
         String category = params.get(QUESTION_CATEGORY_PARAMETER_NAME);
-        logger.info("QID: " + qid);
+        String receivedQuestion = String.format("\nQID: %s\nTITLE: %s\nBODY: %s\nCATEGORY: %s\n", qid, title, body, category);
+        if (category != null) {
+            logger.info(receivedQuestion);    
+        }
+        else {
+            System.out.println("This time the category is null");
+        }
+    
 
         // "get answer"
         AnswerAndResources answerAndResources = null;
@@ -127,18 +140,18 @@ public class TrecLiveQaDemoServer extends NanoHTTPD {
             XmlUtils.addElementWithText(doc, answerElement, ANSWER_CONTENT_ELEMENT_NAME, answerAndResources.answer());
             XmlUtils.addElementWithText(doc, answerElement, ANSWER_RESOURCES_ELEMENT_NAME,
                             answerAndResources.resources());
-            logger.info("Response: " + answerAndResources.answer() + "; Resources: " + answerAndResources.resources());
+            // logger.info("Response: " + answerAndResources.answer() + "; Resources: " + answerAndResources.resources());
         } else {
             answerElement.setAttribute(ANSWER_ANSWERED_YES_NO_ATTRIBUTE_NAME, NO);
             XmlUtils.addElementWithText(doc, answerElement, ANSWER_WHY_NOT_ANSWERED_ELEMENT_NAME, EXCUSE);
-            logger.info("No answer given: " + EXCUSE);
+            // logger.info("No answer given: " + EXCUSE);
         }
 
         final long timeElapsed = System.currentTimeMillis() - getTime;
         answerElement.setAttribute(ANSWER_PARTICIPANT_ID_ATTRIBUTE_NAME, participantId());
         answerElement.setAttribute(ANSWER_REPORTED_TIME_MILLISECONDS_ATTRIBUTE_NAME, Long.toString(timeElapsed));
         answerElement.setAttribute(QUESTION_ID_PARAMETER_NAME, qid);
-        logger.info("Internal time logged: " + timeElapsed);
+        // logger.info("Internal time logged: " + timeElapsed);
 
         String resp = XmlUtils.writeDocumentToString(doc);
         return new Response(resp);
@@ -188,6 +201,11 @@ public class TrecLiveQaDemoServer extends NanoHTTPD {
     public static void main(String[] args) throws IOException {
         TrecLiveQaDemoServer server =
                         new TrecLiveQaDemoServer(args.length == 0 ? DEFAULT_PORT : Integer.parseInt(args[0]));
+
+        Handler fh = new FileHandler(LOG_FILENAME);
+        logger.addHandler(fh);
+        logger.finest("Test message");
+
         server.start();
         System.in.read();
         server.stop();

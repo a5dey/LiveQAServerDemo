@@ -153,7 +153,7 @@ public abstract class NanoHTTPD {
     public void start() throws IOException {
         myServerSocket = new ServerSocket();
         myServerSocket.bind((hostname != null) ? new InetSocketAddress(hostname, myPort) : new InetSocketAddress(myPort));
-
+        System.out.println("NanoHTTPD. Start. ");
         myThread = new Thread(new Runnable() {
             @Override
             public void run() {
