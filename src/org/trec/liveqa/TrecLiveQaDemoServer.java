@@ -173,7 +173,29 @@ public class TrecLiveQaDemoServer extends NanoHTTPD {
      */
     protected AnswerAndResources getAnswerAndResources(String qid, String title, String body, String category)
                     throws InterruptedException {
-        return new AnswerAndResources("my answer", "resource1,resource2");
+       try
+        {
+            ProcessBuilder p = new ProcessBuilder("\Answers.py");
+            BufferedReader stdInput = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            BufferedReader stdError = new BufferedReader(new InputStreamReader(p.getErrorStream()));
+            String resources=new String();
+            while ((s = stdInput.readLine()) != null) {
+                if(Pattern.matches("<\\b(https?|ftp|file)://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]>",s))
+                    resources+=s;
+                else if((s.substring(0,4)).equals("Time"))
+                {
+                    String time=s;
+                    break;
+                }
+                else
+                    String answer+=s;
+            }
+            return new AnswerAndResources(answer, resources);
+        }
+        catch(IOException e)
+        {
+           e.printStackTrace();                 
+        }
     }
 
     protected static class AnswerAndResources {
