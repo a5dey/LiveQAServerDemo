@@ -80,7 +80,7 @@ public class TrecLiveQaDemoServer extends NanoHTTPD {
         final long getTime = System.currentTimeMillis();
         // logger.info("Got request at " + getTime);
         System.out.println("Got request");
-
+        System.out.println("Test test");
         // read question data
         Map<String, String> files = new HashMap<>();
         Method method = session.getMethod();
